@@ -2,7 +2,7 @@ import { dlopen, FFIType, ptr, toArrayBuffer } from "bun:ffi";
 
 const CF_TEXT = 1;
 
-const user32 = dlopen(`user32.dll`, {
+const user32 = dlopen("user32.dll", {
   GetForegroundWindow: {
     args: [],
     returns: FFIType.int32_t,
@@ -22,6 +22,10 @@ const user32 = dlopen(`user32.dll`, {
   GetClipboardData: {
     args: [FFIType.uint32_t],
     returns: FFIType.ptr,
+  },
+  GetCursorPos: {
+    args: [FFIType.ptr],
+    returns: FFIType.int8_t,
   },
 });
 
@@ -49,8 +53,24 @@ function getClipboard() {
   return new TextDecoder().decode(array);
 }
 
-const a = getClipboard();
-const b = getWindow()
+function getCursorPos() {
+  const buffer = new Int32Array(2);
+  const pointer = ptr(buffer);
+  if (user32.symbols.GetCursorPos(pointer) === 0) {
+    throw new Error("cant get cursor pos");
+  }
+  return {
+    x: buffer[0],
+    y: buffer[1]
+  }
+}
 
-console.log(a);
-console.log(b);
+// const a = getClipboard();
+// const b = getWindow()
+//
+// console.log(a);
+// console.log(b);
+
+
+const c = getCursorPos();
+console.log(c)
