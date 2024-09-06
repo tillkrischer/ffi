@@ -146,9 +146,25 @@ const itemPos = {
   y: 574,
 };
 
+async function getCurrencyCount(orb: "alt" | "aug") {
+  const pos = orb === "alt" ? altPos : augPos;
+  await sleep(100);
+  setCursorPosObj(pos);
+  await sleep(300);
+  await pressControlAltC();
+  await sleep(300);
+  const clipboard = getClipboard();
+  const regex = /Stack Size: (.*)\//;
+  const match = clipboard.match(regex);
+  if (match === null) {
+    throw new Error("couldnt match currency count");
+  }
+  return parseInt(match[1].replace(",", ""));
+}
+
 async function currencyClick(orb: "alt" | "aug") {
   const pos = orb === "alt" ? altPos : augPos;
-  await sleep(500);
+  await sleep(100);
   setCursorPosObj(pos);
   await sleep(100);
   mouseClick("right");
@@ -159,7 +175,7 @@ async function currencyClick(orb: "alt" | "aug") {
 }
 
 function checkTargetCondition(item: string) {
-  const regex = /explode/i;
+  const regex = /(21-30).*explode/i;
   return regex.test(item);
 }
 
@@ -169,9 +185,9 @@ function checkHasPrefix(item: string) {
 }
 
 async function getItem() {
-  await sleep(500);
+  await sleep(100);
   setCursorPosObj(itemPos);
-  await sleep(500);
+  await sleep(100);
   await pressControlAltC();
   await sleep(100);
   return getClipboard();
@@ -186,20 +202,28 @@ function isGameForeground() {
 
 await sleep(2000);
 
+let altCount = await getCurrencyCount("alt");
+let augCount = await getCurrencyCount("aug");
+
+console.log("altCount", altCount);
+console.log("augCount", augCount);
+
 let item = "";
-while (isGameForeground()) {
+while (isGameForeground() && altCount > 10 && augCount > 10) {
   item = await getItem();
 
   if (checkTargetCondition(item)) {
-    console.log("success!")
+    console.log("success!");
     break;
   }
 
   if (!checkHasPrefix(item)) {
     await currencyClick("aug");
+    augCount -= 1;
   } else {
     await currencyClick("alt");
+    altCount -= 1;
   }
 
-  await sleep(1000);
+  await sleep(500);
 }
