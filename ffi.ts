@@ -202,6 +202,10 @@ function isGameForeground() {
 
 await sleep(2000);
 
+if (!isGameForeground()) {
+  throw new Error("game not in foreground");
+}
+
 let altCount = await getCurrencyCount("alt");
 let augCount = await getCurrencyCount("aug");
 
@@ -209,20 +213,22 @@ console.log("altCount", altCount);
 console.log("augCount", augCount);
 
 let item = "";
-while (isGameForeground() && altCount > 10 && augCount > 10) {
-  item = await getItem();
+while (altCount > 10 && augCount > 10) {
+  if (isGameForeground()) {
+    item = await getItem();
 
-  if (checkTargetCondition(item)) {
-    console.log("success!");
-    break;
-  }
+    if (checkTargetCondition(item)) {
+      console.log("success!");
+      break;
+    }
 
-  if (!checkHasPrefix(item)) {
-    await currencyClick("aug");
-    augCount -= 1;
-  } else {
-    await currencyClick("alt");
-    altCount -= 1;
+    if (!checkHasPrefix(item)) {
+      await currencyClick("aug");
+      augCount -= 1;
+    } else {
+      await currencyClick("alt");
+      altCount -= 1;
+    }
   }
 
   await sleep(500);
